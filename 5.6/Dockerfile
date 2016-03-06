@@ -24,10 +24,12 @@ RUN { \
 	} | debconf-set-selections \
 	&& apt-get update \
 	&& apt-get install -y \
-		percona-server-server-$PERCONA_MAJOR=$PERCONA_VERSION \
+		percona-server-server-$PERCONA_MAJOR=$PERCONA_VERSION xtrabackup netcat-traditional \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& rm -rf /var/lib/mysql \
 	&& mkdir /var/lib/mysql
+
+ENV SLAVE_USER repl
 
 # comment out a few problematic configuration values
 # don't reverse lookup hostnames, they are usually another container
@@ -38,8 +40,11 @@ RUN sed -Ei 's/^(bind-address|log)/#&/' /etc/mysql/my.cnf \
 VOLUME ["/var/lib/mysql", "/var/log/mysql"]
 
 COPY docker-entrypoint.sh /
+COPY repl.cnf /etc/mysql/conf.d/
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
 EXPOSE 3306
+EXPOSE 3307
+
 CMD ["mysqld"]
